@@ -50,7 +50,9 @@ second response superseded an earlier one.
 
 ## Inventory columns
 
-The workbook must contain an Excel **table** (default name `Inventory`) with
+The inventory is an Excel workbook in SharePoint or OneDrive for Business:
+`.xlsx`, macro-enabled `.xlsm`, or `.xlsb`. Macros are never run by the
+flows. It must contain an Excel **table** (default name `Inventory`) with
 these exact column headers. `templates/inventory-template.xlsx` has the table
 ready, with dropdowns for `Status` and `Criticality`.
 

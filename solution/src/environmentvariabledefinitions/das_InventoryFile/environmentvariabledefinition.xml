@@ -1,6 +1,6 @@
 <environmentvariabledefinition schemaname="das_InventoryFile">
-  <description default="Excel connector 'file' ID for the inventory workbook, e.g. 01ABCDEF... copied from the action's code view.">
-    <label description="Excel connector 'file' ID for the inventory workbook, e.g. 01ABCDEF... copied from the action's code view." languagecode="1033" />
+  <description default="File ID of the workbook (.xlsx, .xlsm or .xlsb), from the Id output of OneDrive for Business or SharePoint 'Get file metadata using path'.">
+    <label description="File ID of the workbook (.xlsx, .xlsm or .xlsb), from the Id output of OneDrive for Business or SharePoint 'Get file metadata using path'." languagecode="1033" />
   </description>
   <displayname default="Inventory File">
     <label description="Inventory File" languagecode="1033" />

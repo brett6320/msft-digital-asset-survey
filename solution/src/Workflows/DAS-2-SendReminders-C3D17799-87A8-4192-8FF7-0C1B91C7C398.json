@@ -182,7 +182,7 @@
             ]
           }
         },
-        "List_sent_rows": {
+        "List_inventory_rows": {
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
@@ -195,7 +195,6 @@
               "drive": "@parameters('Inventory Drive (das_InventoryDrive)')",
               "file": "@parameters('Inventory File (das_InventoryFile)')",
               "table": "@parameters('Inventory Table (das_InventoryTable)')",
-              "$filter": "Status eq 'Sent'",
               "dateTimeFormat": "ISO 8601"
             },
             "authentication": "@parameters('$authentication')"
@@ -211,14 +210,26 @@
             ]
           }
         },
+        "Filter_sent_rows": {
+          "type": "Query",
+          "inputs": {
+            "from": "@outputs('List_inventory_rows')?['body/value']",
+            "where": "@and(equals(trim(string(item()?['Status'])), 'Sent'), or(equals(outputs('Compose_settings')?['Campaign'], '*'), equals(trim(string(item()?['CampaignID'])), outputs('Compose_settings')?['Campaign'])))"
+          },
+          "runAfter": {
+            "List_inventory_rows": [
+              "Succeeded"
+            ]
+          }
+        },
         "Filter_due_rows": {
           "type": "Query",
           "inputs": {
-            "from": "@outputs('List_sent_rows')?['body/value']",
-            "where": "@and(or(equals(outputs('Compose_settings')?['Campaign'], '*'), equals(trim(string(item()?['CampaignID'])), outputs('Compose_settings')?['Campaign'])), greaterOrEquals(div(sub(ticks(utcNow()), ticks(if(empty(item()?['LastReminder']), if(empty(item()?['SentDate']), utcNow(), item()?['SentDate']), item()?['LastReminder']))), 864000000000), outputs('Compose_settings')?['IntervalDays']))"
+            "from": "@body('Filter_sent_rows')",
+            "where": "@greaterOrEquals(div(sub(ticks(utcNow()), ticks(if(empty(item()?['LastReminder']), if(empty(item()?['SentDate']), utcNow(), item()?['SentDate']), item()?['LastReminder']))), 864000000000), outputs('Compose_settings')?['IntervalDays'])"
           },
           "runAfter": {
-            "List_sent_rows": [
+            "Filter_sent_rows": [
               "Succeeded"
             ]
           }

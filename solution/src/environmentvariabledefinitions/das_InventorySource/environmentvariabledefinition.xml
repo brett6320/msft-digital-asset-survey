@@ -1,6 +1,6 @@
 <environmentvariabledefinition schemaname="das_InventorySource">
-  <description default="Excel connector 'source' (Location) for the inventory workbook, e.g. me (OneDrive) or the SharePoint site value copied from the action's code view.">
-    <label description="Excel connector 'source' (Location) for the inventory workbook, e.g. me (OneDrive) or the SharePoint site value copied from the action's code view." languagecode="1033" />
+  <description default="Where the workbook lives: me for the flow account's OneDrive, or the SharePoint site URL, e.g. https://contoso.sharepoint.com/sites/Assets.">
+    <label description="Where the workbook lives: me for the flow account's OneDrive, or the SharePoint site URL, e.g. https://contoso.sharepoint.com/sites/Assets." languagecode="1033" />
   </description>
   <displayname default="Inventory Source">
     <label description="Inventory Source" languagecode="1033" />

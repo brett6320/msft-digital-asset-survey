@@ -33,8 +33,14 @@
 
 ## 2. Prepare the workbook
 
-1. Copy `templates/inventory-template.xlsx` into a SharePoint document
-   library (or the flow account's OneDrive).
+The workbook can be in a SharePoint document library or in the flow
+account's OneDrive for Business. It can be `.xlsx`, `.xlsm`
+(macro-enabled) or `.xlsb`.
+
+1. Copy `templates/inventory-template.xlsx` there. For a macro-enabled
+   workbook, open the template in desktop Excel, add your macros, and
+   **File > Save As > Excel Macro-Enabled Workbook (\*.xlsm)**. Or add the
+   `Inventory` table to your existing `.xlsm` (see below).
 2. Delete the example row, or leave it; it's `Excluded`, so the flows ignore it.
 3. On the **Config** sheet, paste the base link into `FormBaseUrl` and the
    question ID into `AppIdQuestionId`.
@@ -63,7 +69,7 @@ Open one or two links to check the AppID shows up already filled in.
 
 ## 4. Import the solution
 
-1. Run `scripts/pack.sh` to produce `dist/DigitalAssetSurvey_1_0_0_0.zip`
+1. Run `scripts/pack.sh` to produce `dist/DigitalAssetSurvey_<version>.zip`
    (or take it from a release).
 2. In [make.powerautomate.com](https://make.powerautomate.com), pick the
    environment, then **Solutions > Import solution** and choose the zip.
@@ -91,15 +97,29 @@ Open one or two links to check the AppID shows up already filled in.
 
 ### Finding the Excel location values
 
-The Excel connector identifies the workbook with three IDs that the designer
-normally hides behind dropdowns. To get them:
+The Excel connector identifies the workbook by location, document library
+and **file ID**. The file picker doesn't show `.xlsm` files, so get the file
+ID from a metadata action instead. That works for every format.
 
-1. Create a throwaway cloud flow with a manual trigger and one **Excel Online
-   (Business) > List rows present in a table** action.
-2. Pick the location, document library, file and table from the dropdowns.
-3. Open the action's **... > Peek code** (or code view) and copy the values of
-   `source`, `drive` and `file` exactly as shown into the three variables.
-4. Delete the throwaway flow.
+1. Create a throwaway instant cloud flow (manual trigger), signed in as the
+   flow account.
+2. Add **Excel Online (Business) > List rows present in a table**. Choose the
+   **Location** and **Document Library** from the dropdowns. Leave File empty.
+3. Add one of these, depending on where the workbook is, and enter the file's
+   path:
+   - SharePoint: **SharePoint > Get file metadata using path** (Site
+     Address = your site, File Path = e.g. `/Shared Documents/Inventory/assets.xlsm`).
+   - OneDrive: **OneDrive for Business > Get file metadata using path**
+     (File Path = e.g. `/Inventory/assets.xlsm`).
+4. Run the flow. From the metadata action's outputs, copy **Id** into
+   **Inventory File**.
+5. In the Excel action, open **... > Peek code** (or code view) and copy
+   `source` into **Inventory Source** and `drive` into **Inventory Drive**.
+   `source` is `me` for OneDrive, or the SharePoint site URL.
+6. Delete the throwaway flow.
+
+If the workbook is later renamed, moved or re-uploaded, the flows will fail
+to find it. Repeat steps 3–4 to get the new ID.
 
 ## 5. Turn on and test
 
@@ -147,8 +167,20 @@ Test with a campaign that only contains you:
   record these in `LastError`; DAS 2 retries the next day. For DAS 3, the
   admin gets an email, and you can resubmit the failed run from the flow's
   run history.
-- **Updates match on AppID.** If two rows share an AppID, the connector
-  updates only one of them, so keep AppIDs unique.
+- **Updates match on AppID.** If two rows share an AppID, only the first is
+  updated.
+- **Macro-enabled workbooks**: Power Automate never runs the VBA macros.
+  It only reads and writes the `Inventory` table. Microsoft warns that
+  workbooks with ActiveX or Form controls may not work with the Excel
+  connector, so test with your real workbook. Macros that rewrite the
+  `Inventory` table (renaming headers, re-creating the table, clearing
+  columns) will break the flows or erase the status columns.
+- **Hidden columns are fine.** The flows filter rows themselves rather than
+  using the connector's filter query, which fails on tables with hidden
+  columns.
+- **Workbook limits**: 25 MB maximum. Heavy formulas in or near the table can
+  make connector calls time out. Set calculation to manual if that happens.
+  After a flow writes, the file can stay locked for edits for a few minutes.
 - **The AppID on the form is editable.** A respondent could change it. DAS 3
   emails the admin if the AppID doesn't match a row, and flags it in
   `LastError` when the responder isn't the listed owner.

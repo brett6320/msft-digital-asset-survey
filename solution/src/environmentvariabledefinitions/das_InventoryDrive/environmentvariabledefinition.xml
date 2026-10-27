@@ -1,6 +1,6 @@
 <environmentvariabledefinition schemaname="das_InventoryDrive">
-  <description default="Excel connector 'drive' (Document Library) ID for the inventory workbook, e.g. b!AbC... copied from the action's code view.">
-    <label description="Excel connector 'drive' (Document Library) ID for the inventory workbook, e.g. b!AbC... copied from the action's code view." languagecode="1033" />
+  <description default="Document library ID (drive) holding the workbook, e.g. b!AbC.... Pick it in an Excel action's Document Library dropdown and copy it from code view.">
+    <label description="Document library ID (drive) holding the workbook, e.g. b!AbC.... Pick it in an Excel action's Document Library dropdown and copy it from code view." languagecode="1033" />
   </description>
   <displayname default="Inventory Drive">
     <label description="Inventory Drive" languagecode="1033" />
