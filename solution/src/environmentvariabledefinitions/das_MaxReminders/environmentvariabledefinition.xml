@@ -1,0 +1,14 @@
+<environmentvariabledefinition schemaname="das_MaxReminders">
+  <defaultvalue>3</defaultvalue>
+  <description default="Reminders to send before a row is set to Escalated.">
+    <label description="Reminders to send before a row is set to Escalated." languagecode="1033" />
+  </description>
+  <displayname default="Max Reminders">
+    <label description="Max Reminders" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

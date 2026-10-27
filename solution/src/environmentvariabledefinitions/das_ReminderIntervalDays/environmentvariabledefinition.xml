@@ -1,0 +1,14 @@
+<environmentvariabledefinition schemaname="das_ReminderIntervalDays">
+  <defaultvalue>7</defaultvalue>
+  <description default="Days to wait after the survey or previous reminder before sending the next reminder.">
+    <label description="Days to wait after the survey or previous reminder before sending the next reminder." languagecode="1033" />
+  </description>
+  <displayname default="Reminder Interval Days">
+    <label description="Reminder Interval Days" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="das_SenderMailbox">
+  <description default="Shared mailbox that sends surveys, reminders and admin notices. The flow connection's account needs Send As on it.">
+    <label description="Shared mailbox that sends surveys, reminders and admin notices. The flow connection's account needs Send As on it." languagecode="1033" />
+  </description>
+  <displayname default="Sender Mailbox">
+    <label description="Sender Mailbox" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>1</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

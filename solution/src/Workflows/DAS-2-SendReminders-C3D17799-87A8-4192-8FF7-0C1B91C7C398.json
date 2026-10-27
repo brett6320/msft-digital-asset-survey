@@ -1,0 +1,510 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_excelonlinebusiness": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "das_ExcelOnlineBusiness"
+        },
+        "api": {
+          "name": "shared_excelonlinebusiness"
+        }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "das_Office365Outlook"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Inventory Source (das_InventorySource)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_InventorySource"
+          }
+        },
+        "Inventory Drive (das_InventoryDrive)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_InventoryDrive"
+          }
+        },
+        "Inventory File (das_InventoryFile)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_InventoryFile"
+          }
+        },
+        "Inventory Table (das_InventoryTable)": {
+          "defaultValue": "Inventory",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_InventoryTable"
+          }
+        },
+        "Sender Mailbox (das_SenderMailbox)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_SenderMailbox"
+          }
+        },
+        "Admin Email (das_AdminEmail)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_AdminEmail"
+          }
+        },
+        "Reminder Interval Days (das_ReminderIntervalDays)": {
+          "defaultValue": "7",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_ReminderIntervalDays"
+          }
+        },
+        "Max Reminders (das_MaxReminders)": {
+          "defaultValue": "3",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_MaxReminders"
+          }
+        },
+        "Reminder Campaign Filter (das_ReminderCampaignFilter)": {
+          "defaultValue": "*",
+          "type": "String",
+          "metadata": {
+            "schemaName": "das_ReminderCampaignFilter"
+          }
+        }
+      },
+      "triggers": {
+        "Recurrence": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Week",
+            "interval": 1,
+            "schedule": {
+              "weekDays": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday"
+              ],
+              "hours": [
+                "13"
+              ],
+              "minutes": [
+                0
+              ]
+            },
+            "timeZone": "UTC"
+          }
+        }
+      },
+      "actions": {
+        "Initialize_ReminderCount": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "RemindersSent",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          },
+          "runAfter": {}
+        },
+        "Initialize_Escalated": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Escalated",
+                "type": "array",
+                "value": []
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_ReminderCount": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Initialize_Errors": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Errors",
+                "type": "array",
+                "value": []
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_Escalated": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Compose_settings": {
+          "type": "Compose",
+          "inputs": {
+            "IntervalDays": "@int(parameters('Reminder Interval Days (das_ReminderIntervalDays)'))",
+            "MaxReminders": "@int(parameters('Max Reminders (das_MaxReminders)'))",
+            "Campaign": "@trim(parameters('Reminder Campaign Filter (das_ReminderCampaignFilter)'))"
+          },
+          "runAfter": {
+            "Initialize_Errors": [
+              "Succeeded"
+            ]
+          }
+        },
+        "List_sent_rows": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_excelonlinebusiness",
+              "operationId": "GetItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness"
+            },
+            "parameters": {
+              "source": "@parameters('Inventory Source (das_InventorySource)')",
+              "drive": "@parameters('Inventory Drive (das_InventoryDrive)')",
+              "file": "@parameters('Inventory File (das_InventoryFile)')",
+              "table": "@parameters('Inventory Table (das_InventoryTable)')",
+              "$filter": "Status eq 'Sent'",
+              "dateTimeFormat": "ISO 8601"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "paginationPolicy": {
+              "minimumItemCount": 5000
+            }
+          },
+          "runAfter": {
+            "Compose_settings": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Filter_due_rows": {
+          "type": "Query",
+          "inputs": {
+            "from": "@outputs('List_sent_rows')?['body/value']",
+            "where": "@and(or(equals(outputs('Compose_settings')?['Campaign'], '*'), equals(trim(string(item()?['CampaignID'])), outputs('Compose_settings')?['Campaign'])), greaterOrEquals(div(sub(ticks(utcNow()), ticks(if(empty(item()?['LastReminder']), if(empty(item()?['SentDate']), utcNow(), item()?['SentDate']), item()?['LastReminder']))), 864000000000), outputs('Compose_settings')?['IntervalDays']))"
+          },
+          "runAfter": {
+            "List_sent_rows": [
+              "Succeeded"
+            ]
+          }
+        },
+        "For_each_due_row": {
+          "type": "Foreach",
+          "foreach": "@body('Filter_due_rows')",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          },
+          "actions": {
+            "Compose_reminders_so_far": {
+              "type": "Compose",
+              "inputs": "@int(first(split(if(empty(items('For_each_due_row')?['ReminderCount']), '0', string(items('For_each_due_row')?['ReminderCount'])), '.')))",
+              "runAfter": {}
+            },
+            "Check_max_reminders": {
+              "type": "If",
+              "expression": {
+                "greaterOrEquals": [
+                  "@outputs('Compose_reminders_so_far')",
+                  "@outputs('Compose_settings')?['MaxReminders']"
+                ]
+              },
+              "actions": {
+                "Update_row_escalated": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_excelonlinebusiness",
+                      "operationId": "PatchItem",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness"
+                    },
+                    "parameters": {
+                      "source": "@parameters('Inventory Source (das_InventorySource)')",
+                      "drive": "@parameters('Inventory Drive (das_InventoryDrive)')",
+                      "file": "@parameters('Inventory File (das_InventoryFile)')",
+                      "table": "@parameters('Inventory Table (das_InventoryTable)')",
+                      "idColumn": "AppID",
+                      "id": "@items('For_each_due_row')?['AppID']",
+                      "item/Status": "Escalated"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {}
+                },
+                "Append_escalated": {
+                  "type": "AppendToArrayVariable",
+                  "inputs": {
+                    "name": "Escalated",
+                    "value": {
+                      "AppID": "@items('For_each_due_row')?['AppID']",
+                      "ApplicationName": "@items('For_each_due_row')?['ApplicationName']",
+                      "Criticality": "@items('For_each_due_row')?['Criticality']",
+                      "OwnerName": "@items('For_each_due_row')?['OwnerName']",
+                      "OwnerEmail": "@items('For_each_due_row')?['OwnerEmail']",
+                      "SentDate": "@items('For_each_due_row')?['SentDate']",
+                      "ReminderCount": "@outputs('Compose_reminders_so_far')"
+                    }
+                  },
+                  "runAfter": {
+                    "Update_row_escalated": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Try": {
+                    "type": "Scope",
+                    "actions": {
+                      "Send_reminder_email": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_office365",
+                            "operationId": "SharedMailboxSendEmailV2",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                          },
+                          "parameters": {
+                            "emailMessage/MailboxAddress": "@parameters('Sender Mailbox (das_SenderMailbox)')",
+                            "emailMessage/To": "@{trim(string(items('For_each_due_row')?['OwnerEmail']))}",
+                            "emailMessage/Subject": "Reminder @{add(outputs('Compose_reminders_so_far'), 1)} of @{outputs('Compose_settings')?['MaxReminders']}: application owner survey for @{items('For_each_due_row')?['ApplicationName']}",
+                            "emailMessage/Body": "<p>Hello @{items('For_each_due_row')?['OwnerName']},</p>\n<p>We have not yet received your survey response for the application below. It takes only a few minutes.</p>\n<table cellpadding=\"4\" style=\"border-collapse:collapse\">\n<tr><td><b>Application</b></td><td>@{items('For_each_due_row')?['ApplicationName']}</td></tr>\n<tr><td><b>App ID</b></td><td>@{items('For_each_due_row')?['AppID']}</td></tr>\n<tr><td><b>Catalogue ID</b></td><td>@{items('For_each_due_row')?['AppCatID']}</td></tr>\n<tr><td><b>Business criticality</b></td><td>@{items('For_each_due_row')?['Criticality']}</td></tr>\n</table>\n<p><a href=\"@{items('For_each_due_row')?['FormsUrl']}\">Open the survey</a></p>\n<p>If you are not the right owner for this application, please say so in the survey and name the correct owner.</p>\n<p>Thank you.</p>",
+                            "emailMessage/Importance": "@{if(greaterOrEquals(add(outputs('Compose_reminders_so_far'), 1), outputs('Compose_settings')?['MaxReminders']), 'High', 'Normal')}"
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        },
+                        "runAfter": {}
+                      },
+                      "Update_row_reminded": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_excelonlinebusiness",
+                            "operationId": "PatchItem",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness"
+                          },
+                          "parameters": {
+                            "source": "@parameters('Inventory Source (das_InventorySource)')",
+                            "drive": "@parameters('Inventory Drive (das_InventoryDrive)')",
+                            "file": "@parameters('Inventory File (das_InventoryFile)')",
+                            "table": "@parameters('Inventory Table (das_InventoryTable)')",
+                            "idColumn": "AppID",
+                            "id": "@items('For_each_due_row')?['AppID']",
+                            "item/LastReminder": "@utcNow('yyyy-MM-ddTHH:mm:ssZ')",
+                            "item/ReminderCount": "@{add(outputs('Compose_reminders_so_far'), 1)}",
+                            "item/LastError": ""
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        },
+                        "runAfter": {
+                          "Send_reminder_email": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Increment_RemindersSent": {
+                        "type": "IncrementVariable",
+                        "inputs": {
+                          "name": "RemindersSent",
+                          "value": 1
+                        },
+                        "runAfter": {
+                          "Update_row_reminded": [
+                            "Succeeded"
+                          ]
+                        }
+                      }
+                    },
+                    "runAfter": {}
+                  },
+                  "Catch": {
+                    "type": "Scope",
+                    "actions": {
+                      "Filter_failed_actions": {
+                        "type": "Query",
+                        "inputs": {
+                          "from": "@result('Try')",
+                          "where": "@equals(item()?['status'], 'Failed')"
+                        },
+                        "runAfter": {}
+                      },
+                      "Compose_error": {
+                        "type": "Compose",
+                        "inputs": "@take(concat(utcNow('yyyy-MM-ddTHH:mm:ssZ'), ' Reminder: ', coalesce(first(body('Filter_failed_actions'))?['name'], 'unknown action'), ': ', coalesce(first(body('Filter_failed_actions'))?['error']?['message'], first(body('Filter_failed_actions'))?['outputs']?['body']?['message'], first(body('Filter_failed_actions'))?['outputs']?['body']?['error']?['message'], 'timed out or unknown error')), 500)",
+                        "runAfter": {
+                          "Filter_failed_actions": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Update_row_error": {
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_excelonlinebusiness",
+                            "operationId": "PatchItem",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness"
+                          },
+                          "parameters": {
+                            "source": "@parameters('Inventory Source (das_InventorySource)')",
+                            "drive": "@parameters('Inventory Drive (das_InventoryDrive)')",
+                            "file": "@parameters('Inventory File (das_InventoryFile)')",
+                            "table": "@parameters('Inventory Table (das_InventoryTable)')",
+                            "idColumn": "AppID",
+                            "id": "@items('For_each_due_row')?['AppID']",
+                            "item/LastError": "@outputs('Compose_error')"
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        },
+                        "runAfter": {
+                          "Compose_error": [
+                            "Succeeded"
+                          ]
+                        }
+                      },
+                      "Append_reminder_error": {
+                        "type": "AppendToArrayVariable",
+                        "inputs": {
+                          "name": "Errors",
+                          "value": {
+                            "AppID": "@items('For_each_due_row')?['AppID']",
+                            "ApplicationName": "@items('For_each_due_row')?['ApplicationName']",
+                            "Error": "@outputs('Compose_error')"
+                          }
+                        },
+                        "runAfter": {
+                          "Update_row_error": [
+                            "Succeeded",
+                            "Failed"
+                          ]
+                        }
+                      }
+                    },
+                    "runAfter": {
+                      "Try": [
+                        "Failed",
+                        "TimedOut"
+                      ]
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Compose_reminders_so_far": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Filter_due_rows": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Check_anything_to_report": {
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@or(not(empty(variables('Escalated'))), not(empty(variables('Errors'))))",
+              true
+            ]
+          },
+          "actions": {
+            "Create_escalated_table": {
+              "type": "Table",
+              "inputs": {
+                "from": "@variables('Escalated')",
+                "format": "HTML"
+              },
+              "runAfter": {}
+            },
+            "Create_error_table": {
+              "type": "Table",
+              "inputs": {
+                "from": "@variables('Errors')",
+                "format": "HTML"
+              },
+              "runAfter": {
+                "Create_escalated_table": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Send_report_to_admin": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_office365",
+                  "operationId": "SharedMailboxSendEmailV2",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                },
+                "parameters": {
+                  "emailMessage/MailboxAddress": "@parameters('Sender Mailbox (das_SenderMailbox)')",
+                  "emailMessage/To": "@parameters('Admin Email (das_AdminEmail)')",
+                  "emailMessage/Subject": "Digital asset survey reminders: @{variables('RemindersSent')} sent, @{length(variables('Escalated'))} escalated, @{length(variables('Errors'))} errors",
+                  "emailMessage/Body": "<p>Reminders sent: @{variables('RemindersSent')}</p>\n@{if(empty(variables('Escalated')), '', concat('<p><b>Escalated</b>: these owners reached the maximum number of reminders without responding. Follow up directly; the rows are now Status = Escalated and will get no more reminders. A late response is still recorded.</p>', body('Create_escalated_table')))}\n@{if(empty(variables('Errors')), '', concat('<p><b>Errors</b>: the reminder failed and will be retried on the next run. See LastError on each row.</p>', body('Create_error_table')))}",
+                  "emailMessage/Importance": "High"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runAfter": {
+                "Create_error_table": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "For_each_due_row": [
+              "Succeeded",
+              "Failed"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}
