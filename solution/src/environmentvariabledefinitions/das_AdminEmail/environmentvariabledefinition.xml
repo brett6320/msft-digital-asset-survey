@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="das_AdminEmail">
+  <description default="Address (or distribution list) that receives run summaries, escalations and errors.">
+    <label description="Address (or distribution list) that receives run summaries, escalations and errors." languagecode="1033" />
+  </description>
+  <displayname default="Admin Email">
+    <label description="Admin Email" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>1</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="das_FormAppIdQuestionId">
+  <description default="Forms question ID of the AppID question, e.g. r1a2b3c4d5e6f... (the r... key in the pre-filled link).">
+    <label description="Forms question ID of the AppID question, e.g. r1a2b3c4d5e6f... (the r... key in the pre-filled link)." languagecode="1033" />
+  </description>
+  <displayname default="Form AppID Question Id">
+    <label description="Form AppID Question Id" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>1</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

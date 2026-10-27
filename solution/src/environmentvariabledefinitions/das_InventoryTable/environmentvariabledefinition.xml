@@ -1,0 +1,14 @@
+<environmentvariabledefinition schemaname="das_InventoryTable">
+  <defaultvalue>Inventory</defaultvalue>
+  <description default="Name (or {GUID}) of the Excel table holding the inventory.">
+    <label description="Name (or {GUID}) of the Excel table holding the inventory." languagecode="1033" />
+  </description>
+  <displayname default="Inventory Table">
+    <label description="Inventory Table" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

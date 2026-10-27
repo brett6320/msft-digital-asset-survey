@@ -1,0 +1,13 @@
+<environmentvariabledefinition schemaname="das_FormId">
+  <description default="Microsoft Forms form ID (the id= value in the form's URL).">
+    <label description="Microsoft Forms form ID (the id= value in the form's URL)." languagecode="1033" />
+  </description>
+  <displayname default="Form Id">
+    <label description="Form Id" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.0.0.0</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>1</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>
