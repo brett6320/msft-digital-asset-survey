@@ -138,7 +138,7 @@
             ]
           }
         },
-        "List_pending_rows": {
+        "List_inventory_rows": {
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
@@ -151,7 +151,6 @@
               "drive": "@parameters('Inventory Drive (das_InventoryDrive)')",
               "file": "@parameters('Inventory File (das_InventoryFile)')",
               "table": "@parameters('Inventory Table (das_InventoryTable)')",
-              "$filter": "Status eq 'Pending'",
               "dateTimeFormat": "ISO 8601"
             },
             "authentication": "@parameters('$authentication')"
@@ -167,21 +166,21 @@
             ]
           }
         },
-        "Filter_campaign": {
+        "Filter_pending_rows": {
           "type": "Query",
           "inputs": {
-            "from": "@outputs('List_pending_rows')?['body/value']",
-            "where": "@or(equals(outputs('Compose_CampaignID'), '*'), equals(trim(string(item()?['CampaignID'])), outputs('Compose_CampaignID')))"
+            "from": "@outputs('List_inventory_rows')?['body/value']",
+            "where": "@and(equals(trim(string(item()?['Status'])), 'Pending'), or(equals(outputs('Compose_CampaignID'), '*'), equals(trim(string(item()?['CampaignID'])), outputs('Compose_CampaignID'))))"
           },
           "runAfter": {
-            "List_pending_rows": [
+            "List_inventory_rows": [
               "Succeeded"
             ]
           }
         },
         "For_each_row": {
           "type": "Foreach",
-          "foreach": "@body('Filter_campaign')",
+          "foreach": "@body('Filter_pending_rows')",
           "runtimeConfiguration": {
             "concurrency": {
               "repetitions": 1
@@ -382,7 +381,7 @@
             }
           },
           "runAfter": {
-            "Filter_campaign": [
+            "Filter_pending_rows": [
               "Succeeded"
             ]
           }
@@ -412,7 +411,7 @@
               "emailMessage/MailboxAddress": "@parameters('Sender Mailbox (das_SenderMailbox)')",
               "emailMessage/To": "@parameters('Admin Email (das_AdminEmail)')",
               "emailMessage/Subject": "Digital asset survey send (campaign @{outputs('Compose_CampaignID')}): @{variables('SentCount')} sent, @{length(variables('Errors'))} errors",
-              "emailMessage/Body": "<p>Campaign: @{outputs('Compose_CampaignID')}</p>\n<p>Pending rows matched: @{length(body('Filter_campaign'))}<br>Surveys sent: @{variables('SentCount')}<br>Errors: @{length(variables('Errors'))}</p>\n@{if(empty(variables('Errors')), '<p>No errors.</p>', concat('<p>Rows set to Status = Error (fix the row, set Status back to Pending, and re-run):</p>', body('Create_error_table')))}",
+              "emailMessage/Body": "<p>Campaign: @{outputs('Compose_CampaignID')}</p>\n<p>Pending rows matched: @{length(body('Filter_pending_rows'))}<br>Surveys sent: @{variables('SentCount')}<br>Errors: @{length(variables('Errors'))}</p>\n@{if(empty(variables('Errors')), '<p>No errors.</p>', concat('<p>Rows set to Status = Error (fix the row, set Status back to Pending, and re-run):</p>', body('Create_error_table')))}",
               "emailMessage/Importance": "@{if(empty(variables('Errors')), 'Normal', 'High')}"
             },
             "authentication": "@parameters('$authentication')"
